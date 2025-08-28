@@ -9,7 +9,7 @@ export const errorHandler = (
   err: AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
@@ -22,8 +22,8 @@ export const errorHandler = (
   const errorResponse = {
     success: false,
     error: {
-      message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : message,
-      ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+      message: process.env['NODE_ENV'] === 'production' ? 'Internal Server Error' : message,
+      ...(process.env['NODE_ENV'] !== 'production' && { stack: err.stack })
     },
     timestamp: new Date().toISOString(),
     path: req.path,
