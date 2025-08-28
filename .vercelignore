@@ -1,0 +1,45 @@
+# Test files
+src/__tests__/
+**/*.test.ts
+**/*.spec.ts
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Documentation
+README.md
+docs/
+
+# Development tools
+air.toml
+.air.toml
+Makefile
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
