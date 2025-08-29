@@ -75,14 +75,16 @@ app.get('/', (_req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
-  console.log(`📱 Dashboard API: http://localhost:${PORT}/api/dashboard`);
-  console.log(`🔥 Database: Firebase Firestore`);
-});
+// Only start the server if not in production (Vercel handles the server)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
+    console.log(`📱 Dashboard API: http://localhost:${PORT}/api/dashboard`);
+    console.log(`🔥 Database: Firebase Firestore`);
+  });
+}
 
 export default app;

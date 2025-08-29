@@ -1,27 +1,113 @@
 # IFA Labs Dashboard API
 
-A robust Node.js Express API written in TypeScript, designed to provide backend services for the IFA Labs Dashboard frontend application. **Now with Firebase integration for scalable cloud database and authentication.**
+A robust Node.js Express API built with TypeScript, featuring Firebase integration, JWT authentication with OTP verification, role-based access control, and comprehensive dashboard management.
 
-## 🚀 Features
+**Powered by Firebase 🔥 & JWT Security 🔐**
 
-- **TypeScript**: Full TypeScript support with strict type checking
-- **Express.js**: Fast, unopinionated web framework for Node.js
-- **Firebase Integration**: Cloud Firestore database, Authentication, and Storage
-- **Security**: Built-in security middleware (Helmet, CORS, Rate Limiting, Firebase Auth)
-- **Performance**: Compression and optimization middleware
-- **Logging**: Structured logging with configurable levels
-- **Error Handling**: Comprehensive error handling and validation
-- **API Documentation**: Well-documented REST endpoints
-- **Testing**: Jest testing framework setup
-- **Code Quality**: ESLint configuration for consistent code style
-- **Role-Based Access Control**: User roles and subscription-based permissions
-- **Real-time Database**: Firestore for scalable data storage
+## ✨ Features
 
-## 📋 Prerequisites
+- **🚀 TypeScript**: Full TypeScript support with strict type checking
+- **🔥 Firebase Integration**: Firestore database, Authentication, and Storage
+- **🔐 JWT Authentication**: Secure JWT-based authentication with 7-day token expiration
+- **📧 OTP Verification**: Email-based OTP verification for signup, login, and password reset
+- **🛡️ Security**: Role-based access control, rate limiting, and account protection
+- **📊 Dashboard APIs**: Comprehensive dashboard data management
+- **📈 Real-time Metrics**: System monitoring and analytics
+- **🔒 Rate Limiting**: Subscription-based API rate limiting
+- **📝 API Documentation**: Swagger/OpenAPI documentation
+- **🧪 Testing**: Jest testing framework with coverage
+- **📦 Docker Ready**: Containerized deployment support
+- **☁️ Vercel Ready**: Optimized for Vercel deployment
 
-- Node.js 18.0.0 or higher
-- npm or yarn package manager
-- Firebase project (for database and authentication)
+## 🔐 JWT Authentication System
+
+### Authentication Flow
+
+#### 1. **Signup Process** (3-Step Verification)
+```
+Step 1: POST /api/auth/signup/initiate
+├── Send email + displayName
+├── Generate OTP (6 digits)
+├── Create user (inactive, unverified)
+└── Send OTP via email
+
+Step 2: POST /api/auth/signup/verify-email  
+├── Send email + OTP
+├── Verify OTP (10 min expiry)
+├── Mark email as verified
+└── Send success notification
+
+Step 3: POST /api/auth/signup/set-password
+├── Send email + password (min 8 chars)
+├── Hash password with bcrypt
+├── Activate account
+└── Send completion notification
+```
+
+#### 2. **Login Process** (2-Step Verification)
+```
+Step 1: POST /api/auth/login
+├── Send email + password
+├── Verify credentials
+├── Generate login OTP
+├── Store OTP (10 min expiry)
+└── Send OTP via email
+
+Step 2: POST /api/auth/login/verify-otp
+├── Send email + OTP
+├── Verify OTP
+├── Clear OTP
+├── Generate JWT token (7 days)
+└── Return user data + token
+```
+
+#### 3. **Password Reset Process** (3-Step Recovery)
+```
+Step 1: POST /api/auth/forgot-password
+├── Send email
+├── Generate reset OTP
+├── Store OTP (10 min expiry)
+└── Send OTP via email
+
+Step 2: POST /api/auth/reset-password/verify-otp
+├── Send email + OTP
+├── Verify OTP
+├── Generate reset token
+└── Return reset token
+
+Step 3: POST /api/auth/reset-password/set-new-password
+├── Send reset token + new password
+├── Verify token
+├── Hash new password
+└── Send completion notification
+```
+
+### Security Features
+
+- **🔒 Account Protection**: Account locked after 5 failed login attempts (30 min lockout)
+- **⏰ OTP Expiry**: All OTPs expire in 10 minutes
+- **🔄 Token Refresh**: JWT tokens can be refreshed before expiration
+- **📧 Email Verification**: Mandatory email verification before account activation
+- **🔐 Password Security**: Bcrypt hashing with 12 salt rounds
+- **🛡️ Rate Limiting**: Subscription-based API request limits
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/api/auth/signup/initiate` | Start signup process | ❌ |
+| `POST` | `/api/auth/signup/verify-email` | Verify email with OTP | ❌ |
+| `POST` | `/api/auth/signup/set-password` | Set password after verification | ❌ |
+| `POST` | `/api/auth/login` | Start login process | ❌ |
+| `POST` | `/api/auth/login/verify-otp` | Complete login with OTP | ❌ |
+| `POST` | `/api/auth/forgot-password` | Request password reset | ❌ |
+| `POST` | `/api/auth/reset-password/verify-otp` | Verify reset OTP | ❌ |
+| `POST` | `/api/auth/reset-password/set-new-password` | Set new password | ❌ |
+| `GET` | `/api/auth/profile` | Get user profile | ✅ |
+| `PUT` | `/api/auth/profile` | Update user profile | ✅ |
+| `POST` | `/api/auth/logout` | Logout user | ✅ |
+| `POST` | `/api/auth/refresh-token` | Refresh JWT token | ✅ |
+| `GET` | `/api/auth/users` | Get all users (Admin only) | ✅ |
 
 ## 🔥 Firebase Setup
 
@@ -58,239 +144,254 @@ FIREBASE_DATABASE_URL=https://your-project-id.firebaseio.com
 FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 ```
 
-## 🛠️ Installation
+## 📧 Email Configuration
 
-1. **Clone the repository** (if not already done):
-   ```bash
-   cd ifa-labs-dashboard-api
-   ```
+### SMTP Setup
+Configure your email service in `.env`:
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+```env
+# Email Configuration (SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@yourdomain.com
+```
 
-3. **Set up Firebase configuration** (see Firebase Setup above)
+### Supported Email Providers
+- **Gmail**: Use App Password (2FA required)
+- **Outlook/Hotmail**: Use App Password
+- **SendGrid**: Use API key
+- **Mailgun**: Use API key
+- **Custom SMTP**: Any SMTP server
 
-4. **Set up environment variables**:
-   ```bash
-   cp env.example .env
-   # Edit .env with your configuration
-   ```
+### Email Templates
+- **Signup OTP**: Welcome email with verification code
+- **Login OTP**: Login verification code
+- **Password Reset OTP**: Password recovery code
+- **Email Verified**: Confirmation of successful verification
+- **Password Set**: Confirmation of password setup
 
-## 🚀 Running the Application
+## 🚀 Quick Start
 
-### Development Mode
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Firebase project
+- SMTP email service
+
+### Installation
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd ifa-labs-dashboard-api
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp env.example .env
+
+# Edit .env with your configuration
+# Firebase, JWT, and SMTP settings
+
+# Build the project
+npm run build
+
+# Start development server
 npm run dev
 ```
-This starts the server with hot-reload using `ts-node-dev`.
 
-### Production Build
-```bash
-npm run build
-npm start
+### Environment Variables
+```env
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# Firebase Configuration
+FIREBASE_SERVICE_ACCOUNT_KEY=...
+FIREBASE_PROJECT_ID=...
+FIREBASE_DATABASE_URL=...
+FIREBASE_STORAGE_BUCKET=...
+
+# Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@yourdomain.com
 ```
 
-### Testing
-```bash
-npm test
+## 📚 API Documentation
+
+### Authentication Headers
+```http
+Authorization: Bearer <jwt-token>
 ```
 
-### Linting
+### Example API Calls
+
+#### Signup Flow
 ```bash
-npm run lint
-npm run lint:fix
+# 1. Initiate signup
+curl -X POST http://localhost:3001/api/auth/signup/initiate \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","displayName":"John Doe"}'
+
+# 2. Verify email (check email for OTP)
+curl -X POST http://localhost:3001/api/auth/signup/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","otp":"123456"}'
+
+# 3. Set password
+curl -X POST http://localhost:3001/api/auth/signup/set-password \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"securepass123"}'
 ```
 
-## 📚 API Endpoints
+#### Login Flow
+```bash
+# 1. Login with credentials
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"securepass123"}'
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/profile` - Get user profile (authenticated)
-- `PUT /api/auth/profile` - Update user profile (authenticated)
-- `PUT /api/auth/users/:userId/subscription` - Update subscription (admin)
-- `GET /api/auth/users` - Get all users (admin)
-- `PATCH /api/auth/users/:userId/status` - Activate/deactivate user (admin)
-- `DELETE /api/auth/users/:userId` - Delete user (admin)
+# 2. Complete login with OTP (check email for OTP)
+curl -X POST http://localhost:3001/api/auth/login/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","otp":"123456"}'
+```
 
-### Health Check
-- `GET /api/health` - Basic health status
-- `GET /api/health/detailed` - Detailed system information
+#### Protected Endpoints
+```bash
+# Get user profile
+curl -X GET http://localhost:3001/api/auth/profile \
+  -H "Authorization: Bearer <jwt-token>"
 
-### Dashboard
-- `GET /api/dashboard/overview` - Dashboard overview statistics (authenticated)
-- `GET /api/dashboard/users/stats` - User statistics (admin/moderator)
-- `GET /api/dashboard/projects` - Project data with pagination (authenticated)
-- `POST /api/dashboard/projects` - Create new project (admin)
-- `PUT /api/dashboard/projects/:id` - Update project (owner/admin)
-- `GET /api/dashboard/analytics/revenue` - Revenue analytics (professional+)
-- `GET /api/dashboard/metrics/system` - System performance metrics (admin)
-
-### Root
-- `GET /` - API information and status
-
-## 🔐 Authentication & Authorization
-
-### Firebase Authentication
-- JWT-based authentication using Firebase ID tokens
-- Include token in Authorization header: `Bearer <token>`
-
-### User Roles
-- **user**: Basic access to dashboard overview and projects
-- **moderator**: Access to user statistics
-- **admin**: Full access to all endpoints and user management
-
-### Subscription Plans
-- **free**: 1,000 API requests/month
-- **developer**: 10,000 API requests/month
-- **professional**: 100,000 API requests/month + revenue analytics
-- **enterprise**: Unlimited requests + custom features
-
-## 🔧 Configuration
-
-The application uses environment variables for configuration. Key settings include:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 3001 | Server port |
-| `NODE_ENV` | development | Environment mode |
-| `CORS_ORIGIN` | http://localhost:3000 | Allowed CORS origin |
-| `FIREBASE_PROJECT_ID` | - | Firebase project ID |
-| `FIREBASE_DATABASE_URL` | - | Firestore database URL |
-| `FIREBASE_STORAGE_BUCKET` | - | Firebase storage bucket |
-| `RATE_LIMIT_WINDOW_MS` | 900000 | Rate limit window (15 min) |
-| `RATE_LIMIT_MAX_REQUESTS` | 100 | Max requests per window |
-| `HELMET_ENABLED` | true | Security headers |
-| `COMPRESSION_ENABLED` | true | Response compression |
+# Refresh token
+curl -X POST http://localhost:3001/api/auth/refresh-token \
+  -H "Authorization: Bearer <jwt-token>"
+```
 
 ## 🏗️ Project Structure
 
 ```
 src/
-├── config/          # Configuration files (including Firebase)
-├── middleware/      # Express middleware (including Auth)
-├── routes/          # API route handlers
-├── services/        # Firebase service classes
-├── types/           # TypeScript type definitions
-├── utils/           # Utility functions
-└── index.ts         # Main application entry point
+├── config/
+│   ├── firebase.ts          # Firebase configuration
+│   └── index.ts             # Environment variables
+├── middleware/
+│   ├── auth.ts              # JWT authentication middleware
+│   ├── errorHandler.ts      # Global error handling
+│   └── notFoundHandler.ts   # 404 handling
+├── routes/
+│   ├── auth.ts              # Authentication routes
+│   ├── dashboard.ts         # Dashboard API routes
+│   └── health.ts            # Health check routes
+├── services/
+│   ├── firebase.ts          # Firebase service layer
+│   ├── emailService.ts      # Email service with templates
+│   └── jwtService.ts        # JWT token management
+├── types/
+│   └── firebase.ts          # TypeScript interfaces
+└── index.ts                 # Main application entry
 ```
 
-## 🗄️ Database Schema
+## 🔧 Development
 
-The application uses Firebase Firestore with the following collections:
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+```
 
-- **users**: User profiles and subscription information
-- **projects**: Project data with status and progress tracking
-- **revenue**: Revenue tracking and analytics
-- **system_metrics**: Server and application metrics
-- **api_logs**: API request logging and analytics
-- **dashboard_overview**: Aggregated dashboard statistics
-- **user_stats**: User analytics and statistics
-- **revenue_analytics**: Revenue breakdown and trends
-
-## 🧪 Testing
-
-The project includes Jest testing framework with TypeScript support:
-
+### Testing
 ```bash
 # Run all tests
 npm test
 
 # Run tests with coverage
-npm test -- --coverage
+npm run test:coverage
 
 # Run tests in watch mode
-npm test -- --watch
+npm run test:watch
 ```
-
-## 📝 Development
-
-### Adding New Routes
-
-1. Create a new route file in `src/routes/`
-2. Export the router
-3. Import and use it in `src/index.ts`
-
-### Adding New Firebase Collections
-
-1. Define the interface in `src/models/firebase.ts`
-2. Create a service class in `src/services/firebase.ts`
-3. Use the service in your routes
-
-### Authentication Middleware
-
-Use the built-in authentication middleware:
-
-```typescript
-import { authenticateUser, requireRole, requireSubscription } from '../middleware/auth';
-
-// Require authentication
-router.get('/protected', authenticateUser, (req, res) => {});
-
-// Require specific role
-router.get('/admin-only', authenticateUser, requireRole(['admin']), (req, res) => {});
-
-// Require subscription plan
-router.get('/premium', authenticateUser, requireSubscription('professional'), (req, res) => {});
-```
-
-## 🔒 Security Features
-
-- **Firebase Authentication**: Secure user authentication and authorization
-- **Role-Based Access Control**: Granular permissions based on user roles
-- **Subscription-Based Rate Limiting**: API limits based on subscription plans
-- **Helmet**: Security headers
-- **CORS**: Cross-origin resource sharing configuration
-- **Rate Limiting**: API rate limiting to prevent abuse
-- **Input Validation**: Request validation and sanitization
-- **Error Handling**: Secure error responses (no sensitive data in production)
-
-## 📊 Monitoring
-
-The API includes built-in monitoring endpoints:
-
-- Health checks for load balancers
-- System metrics for monitoring tools
-- Request logging with Morgan
-- Custom logging utility for application events
-- Firebase Analytics integration
 
 ## 🚀 Deployment
 
 ### Vercel Deployment
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy automatically
 
-1. **Set Firebase environment variables** in Vercel dashboard
-2. **Deploy**: The build should now succeed with Firebase integration
+### Docker Deployment
+```bash
+# Build Docker image
+docker build -t ifa-labs-dashboard-api .
 
-### Environment Variables
-Ensure all required environment variables are set in production:
-- `NODE_ENV=production`
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_DATABASE_URL`
-- `FIREBASE_STORAGE_BUCKET`
+# Run container
+docker run -p 3001:3001 ifa-labs-dashboard-api
+```
+
+### Environment Variables for Production
+```env
+NODE_ENV=production
+JWT_SECRET=your-production-jwt-secret
+FIREBASE_PROJECT_ID=your-production-project
+SMTP_HOST=your-production-smtp
+SMTP_USER=your-production-email
+SMTP_PASS=your-production-password
+```
+
+## 🔒 Security Considerations
+
+### JWT Security
+- **Secret Key**: Use strong, unique JWT secret
+- **Token Expiry**: 7-day expiration with refresh capability
+- **HTTPS Only**: Always use HTTPS in production
+- **Token Storage**: Store tokens securely (httpOnly cookies recommended)
+
+### OTP Security
+- **Expiry**: 10-minute OTP expiration
+- **Rate Limiting**: Prevent OTP abuse
+- **Email Security**: Use secure SMTP connections
+- **OTP Storage**: Temporary storage in database
+
+### Account Protection
+- **Failed Attempts**: Account lockout after 5 failed logins
+- **Lockout Duration**: 30-minute temporary lockout
+- **Password Requirements**: Minimum 8 characters
+- **Email Verification**: Mandatory before account activation
 
 ## 🤝 Contributing
 
-1. Follow the existing code style
-2. Add tests for new features
-3. Update documentation as needed
-4. Use conventional commit messages
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🆘 Support
 
-For questions or issues:
-1. Check the documentation
-2. Review existing issues
-3. Create a new issue with detailed information
+For support and questions:
+- Create an issue in the repository
+- Check the API documentation
+- Review the authentication flow examples
 
 ---
 
-**Built with ❤️ for IFA Labs Dashboard**
-
-**Powered by Firebase 🔥**
+**Built with ❤️ using Node.js, Express, TypeScript, Firebase, and JWT**
